@@ -12,41 +12,190 @@
   .screen.active { display: flex; flex-direction: column; align-items: center; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 
-  /* Lang switcher */
   .lang-switcher { position: fixed; top: 16px; right: 16px; display: flex; gap: 6px; z-index: 100; }
-  .lang-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 20px; padding: 5px 12px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; letter-spacing: 0.5px; }
+  .lang-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 20px; padding: 5px 12px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
   .lang-btn.active { background: #FF6600; border-color: #FF6600; }
   .lang-btn:hover:not(.active) { background: rgba(255,255,255,0.2); }
 
   .tagline { font-family: 'Playfair Display', serif; color: #fff; font-size: 26px; text-align: center; margin-bottom: 8px; line-height: 1.3; }
   .sub { color: #a0b0cc; font-size: 14px; text-align: center; margin-bottom: 40px; }
-  .mailbox-wrap { position: relative; width: 200px; height: 260px; margin-bottom: 40px; }
+  .mailbox-wrap { width: 200px; height: 260px; margin-bottom: 40px; }
   .mailbox-wrap svg { width: 100%; height: 100%; filter: drop-shadow(0 12px 32px rgba(255,102,0,0.35)); }
   .mailbox-wrap.thunk { animation: thunk 0.4s ease; }
   @keyframes thunk { 0%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(3px)} 100%{transform:translateX(0)} }
+
   .btn { background: #FF6600; color: #fff; border: none; border-radius: 50px; padding: 16px 36px; font-family: 'Lato', sans-serif; font-size: 16px; font-weight: 700; cursor: pointer; transition: background 0.2s, transform 0.1s; letter-spacing: 0.5px; }
   .btn:hover { background: #e05500; transform: translateY(-1px); }
   .btn-secondary { background: transparent; border: 2px solid #FF6600; color: #FF6600; margin-top: 12px; }
   .btn-secondary:hover { background: rgba(255,102,0,0.1); }
+
+  /* ── POSTCARD FLIP ── */
   #screen-editor { gap: 20px; }
   .editor-title { font-family: 'Playfair Display', serif; color: #fff; font-size: 22px; text-align: center; }
-  .postcard { width: 100%; background: #fdf6e3; border-radius: 12px; display: flex; min-height: 220px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); overflow: hidden; position: relative; }
-  .postcard-left { width: 45%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #fff; cursor: pointer; }
-  .camera-icon { font-size: 32px; }
-  .photo-label { font-size: 11px; opacity: 0.85; }
-  .postcard-divider { width: 1px; background: repeating-linear-gradient(to bottom, #ccc 0px, #ccc 6px, transparent 6px, transparent 12px); margin: 12px 0; flex-shrink: 0; }
-  .postcard-right { flex: 1; padding: 12px 14px; display: flex; flex-direction: column; position: relative; }
-  .stamp-area { position: absolute; top: 10px; right: 10px; width: 42px; height: 52px; border: 2px solid #999; border-radius: 2px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 18px; background: #fff; }
-  .postcard-right textarea { flex: 1; border: none; background: transparent; font-family: 'Lato', sans-serif; font-size: 12px; color: #333; resize: none; outline: none; line-height: 1.8; padding-top: 4px; padding-right: 52px; background-image: repeating-linear-gradient(transparent, transparent 26px, #e0d8c8 26px, #e0d8c8 27px); background-size: 100% 27px; }
+
+  .postcard-scene {
+    width: 100%;
+    min-height: 230px;
+    perspective: 1000px;
+    position: relative;
+  }
+  .postcard-flipper {
+    width: 100%;
+    min-height: 230px;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.6s cubic-bezier(0.4,0.2,0.2,1);
+  }
+  .postcard-scene.flipped .postcard-flipper {
+    transform: rotateY(180deg);
+  }
+
+  .postcard-face {
+    position: absolute;
+    width: 100%;
+    min-height: 230px;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  /* FRONT — photo */
+  .postcard-front {
+    background: #222;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+  }
+  .postcard-front .photo-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    color: #fff;
+    opacity: 0.7;
+    pointer-events: none;
+  }
+  .postcard-front .photo-placeholder .cam { font-size: 40px; }
+  .postcard-front .photo-placeholder .label { font-size: 13px; }
+  .postcard-front img.uploaded-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    inset: 0;
+  }
+  .postcard-front .photo-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0);
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .postcard-front:hover .photo-overlay { background: rgba(0,0,0,0.2); }
+  .postcard-front .retake-hint {
+    opacity: 0;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    background: rgba(0,0,0,0.5);
+    padding: 6px 14px;
+    border-radius: 20px;
+    transition: opacity 0.2s;
+  }
+  .postcard-front:hover .retake-hint { opacity: 1; }
+
+  /* BACK — writing */
+  .postcard-back {
+    background: #fdf6e3;
+    transform: rotateY(180deg);
+    display: flex;
+    flex-direction: row;
+  }
+  .back-left-stripe {
+    width: 6px;
+    background: repeating-linear-gradient(to bottom, #FF6600 0px, #FF6600 20px, #fff 20px, #fff 24px);
+    flex-shrink: 0;
+  }
+  .back-content {
+    flex: 1;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+  .stamp-area {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 42px;
+    height: 52px;
+    border: 2px solid #999;
+    border-radius: 2px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    background: #fff;
+  }
+  .back-content textarea {
+    flex: 1;
+    min-height: 80px;
+    border: none;
+    background: transparent;
+    font-family: 'Lato', sans-serif;
+    font-size: 12px;
+    color: #333;
+    resize: none;
+    outline: none;
+    line-height: 1.8;
+    padding-top: 4px;
+    padding-right: 52px;
+    background-image: repeating-linear-gradient(transparent, transparent 26px, #e0d8c8 26px, #e0d8c8 27px);
+    background-size: 100% 27px;
+  }
   .postcard-to { margin-top: 8px; border-top: 1px solid #ddd; padding-top: 6px; display: flex; flex-direction: column; gap: 4px; }
   .postcard-to input { border: none; background: transparent; font-family: 'Lato', sans-serif; font-size: 11px; color: #444; outline: none; padding: 2px 0; border-bottom: 1px dashed #ccc; }
   .postcard-to input::placeholder { color: #aaa; }
-  .char-counter { text-align: right; font-size: 11px; color: #999; margin-top: -8px; }
+  .char-counter { text-align: right; font-size: 11px; color: #999; margin-top: -4px; }
+
+  /* Flip pill button */
+  .flip-btn {
+    position: absolute;
+    bottom: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1a2744;
+    border: 2px solid rgba(255,255,255,0.2);
+    color: #fff;
+    border-radius: 20px;
+    padding: 5px 16px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    z-index: 10;
+    transition: background 0.2s, border-color 0.2s;
+    white-space: nowrap;
+  }
+  .flip-btn:hover { background: #253660; border-color: rgba(255,255,255,0.4); }
+
+  /* hidden file input */
+  #photoInput { display: none; }
+
+  /* ANIMATION SCREEN */
   #screen-anim { position: relative; min-height: 420px; justify-content: center; }
-  .anim-postcard { width: 260px; height: 150px; background: #fdf6e3; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); position: absolute; top: 30px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; justify-content: center; font-size: 40px; }
+  .anim-postcard { width: 260px; height: 150px; background: #fdf6e3; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); position: absolute; top: 30px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; justify-content: center; font-size: 40px; overflow: hidden; }
   .anim-mailbox { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: 140px; height: 180px; }
   .flying { animation: flyIntoMailbox 1.1s cubic-bezier(0.4,0,0.2,1) forwards; }
   @keyframes flyIntoMailbox { 0%{top:30px;transform:translateX(-50%) scale(1);opacity:1} 70%{top:210px;transform:translateX(-50%) scale(0.5) rotate(-3deg);opacity:1} 90%{top:255px;transform:translateX(-50%) scale(0.25);opacity:0.6} 100%{top:265px;transform:translateX(-50%) scale(0.05);opacity:0} }
+
+  /* DONE SCREEN */
   #screen-done { gap: 20px; text-align: center; }
   .done-icon { font-size: 72px; animation: pop 0.5s cubic-bezier(0.175,0.885,0.32,1.275); }
   @keyframes pop { from{transform:scale(0)} to{transform:scale(1)} }
@@ -60,11 +209,12 @@
 </head>
 <body>
 
-<!-- Language switcher -->
 <div class="lang-switcher">
   <button class="lang-btn active" onclick="setLang('en')">EN</button>
   <button class="lang-btn" onclick="setLang('zh')">中文</button>
 </div>
+
+<input type="file" id="photoInput" accept="image/*" capture="environment">
 
 <!-- LANDING -->
 <div id="screen-landing" class="screen active">
@@ -77,7 +227,6 @@
       <ellipse cx="100" cy="80" rx="80" ry="20" fill="#e55500"/>
       <rect x="35" y="100" width="130" height="90" rx="8" fill="#e55500"/>
       <rect x="50" y="125" width="100" height="12" rx="6" fill="#1a1a1a"/>
-      <rect x="52" y="126" width="96" height="4" rx="3" fill="#333"/>
       <rect x="45" y="150" width="110" height="24" rx="4" fill="#fff" opacity="0.15"/>
       <text x="100" y="166" text-anchor="middle" font-family="Arial" font-size="9" font-weight="bold" fill="#fff" letter-spacing="1">ČESKÁ POŠTA</text>
       <circle cx="45" cy="110" r="4" fill="#cc4400"/>
@@ -94,29 +243,52 @@
 <!-- EDITOR -->
 <div id="screen-editor" class="screen">
   <h2 class="editor-title" data-i18n="editorTitle"></h2>
-  <div class="postcard">
-    <div class="postcard-left" onclick="fakePhotoUpload(this)">
-      <span class="camera-icon">📷</span>
-      <span class="photo-label" data-i18n="photoLabel"></span>
-    </div>
-    <div class="postcard-divider"></div>
-    <div class="postcard-right">
-      <div class="stamp-area">🇨🇿<div style="font-size:7px;color:#888;margin-top:2px">CZ</div></div>
-      <textarea id="msgArea" maxlength="150" data-i18n-placeholder="msgPlaceholder"></textarea>
-      <div class="char-counter"><span id="charCount">0</span>/150</div>
-      <div class="postcard-to">
-        <input type="text" id="toName" data-i18n-placeholder="toName" />
-        <input type="text" id="toCity" data-i18n-placeholder="toCity" />
+
+  <div class="postcard-scene" id="postcardScene">
+    <div class="postcard-flipper" id="postcardFlipper">
+
+      <!-- FRONT: photo -->
+      <div class="postcard-face postcard-front" id="postcardFront" onclick="handleFrontClick()">
+        <div class="photo-placeholder" id="photoPlaceholder">
+          <span class="cam">📷</span>
+          <span class="label" data-i18n="photoLabel"></span>
+        </div>
+        <img id="uploadedPhoto" class="uploaded-photo" style="display:none" alt="postcard photo">
+        <div class="photo-overlay">
+          <span class="retake-hint" data-i18n="retakeHint"></span>
+        </div>
+      </div>
+
+      <!-- BACK: writing -->
+      <div class="postcard-face postcard-back">
+        <div class="back-left-stripe"></div>
+        <div class="back-content">
+          <div class="stamp-area">🇨🇿<div style="font-size:7px;color:#888;margin-top:2px">CZ</div></div>
+          <textarea id="msgArea" maxlength="150" data-i18n-placeholder="msgPlaceholder"></textarea>
+          <div class="char-counter"><span id="charCount">0</span>/150</div>
+          <div class="postcard-to">
+            <input type="text" id="toName" data-i18n-placeholder="toName">
+            <input type="text" id="toCity" data-i18n-placeholder="toCity">
+          </div>
+        </div>
       </div>
     </div>
+
+    <!-- Flip pill -->
+    <button class="flip-btn" id="flipBtn" onclick="flipPostcard()"></button>
   </div>
-  <button class="btn" onclick="startSendAnimation()" style="width:100%;margin-top:4px" data-i18n="btnSend"></button>
+
+  <div style="height:28px"></div>
+  <button class="btn" onclick="startSendAnimation()" style="width:100%" data-i18n="btnSend"></button>
   <button class="btn btn-secondary" onclick="showScreen('screen-landing')" style="width:100%" data-i18n="btnBack"></button>
 </div>
 
 <!-- ANIMATION -->
 <div id="screen-anim" class="screen">
-  <div class="anim-postcard" id="animCard">✉️</div>
+  <div class="anim-postcard" id="animCard">
+    <img id="animPhoto" style="width:100%;height:100%;object-fit:cover;display:none" alt="">
+    <span id="animEmoji" style="font-size:40px">✉️</span>
+  </div>
   <div class="anim-mailbox" id="animMailbox">
     <svg viewBox="0 0 140 180" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect x="60" y="140" width="20" height="38" rx="3" fill="#cc4400"/>
@@ -136,18 +308,9 @@
   <h2 class="done-title" data-i18n="doneTitle"></h2>
   <p class="done-sub" data-i18n="doneSub"></p>
   <div class="delivery-card">
-    <div class="delivery-row">
-      <span>📍</span>
-      <div><div data-i18n="sentFrom"></div><div class="delivery-label" data-i18n="sentFromSub"></div></div>
-    </div>
-    <div class="delivery-row">
-      <span>📅</span>
-      <div><div data-i18n="deliveryTime"></div><div class="delivery-label" data-i18n="deliveryTimeSub"></div></div>
-    </div>
-    <div class="delivery-row">
-      <span>🟠</span>
-      <div><div data-i18n="processedBy"></div><div class="delivery-label" data-i18n="processedBySub"></div></div>
-    </div>
+    <div class="delivery-row"><span>📍</span><div><div data-i18n="sentFrom"></div><div class="delivery-label" data-i18n="sentFromSub"></div></div></div>
+    <div class="delivery-row"><span>📅</span><div><div data-i18n="deliveryTime"></div><div class="delivery-label" data-i18n="deliveryTimeSub"></div></div></div>
+    <div class="delivery-row"><span>🟠</span><div><div data-i18n="processedBy"></div><div class="delivery-label" data-i18n="processedBySub"></div></div></div>
   </div>
   <button class="btn" onclick="sendAnother()" style="width:100%" data-i18n="btnAnother"></button>
 </div>
@@ -156,15 +319,18 @@
 const i18n = {
   en: {
     tagline: 'Send a postcard<br>from anywhere 🌍',
-    sub: 'Snap a photo, write a few words. We\'ll send a real postcard.',
+    sub: "Snap a photo, write a few words. We'll send a real postcard.",
     btnWrite: '✉️ \u00a0Write a Postcard',
     editorTitle: 'Your Postcard',
-    photoLabel: 'Your photo',
-    msgPlaceholder: 'Hey! I\'m here and thinking of you...',
+    photoLabel: 'Tap to add your photo',
+    retakeHint: '📷 Change photo',
+    msgPlaceholder: "Hey! I'm here and thinking of you...",
     toName: 'Recipient name',
     toCity: 'City, Country',
     btnSend: '📮 \u00a0Send Postcard',
     btnBack: '← Back',
+    flipToBack: '✏️ Write message →',
+    flipToFront: '🖼 View photo ←',
     doneTitle: 'Postcard Sent!',
     doneSub: 'Your postcard is on its way and will soon delight its recipient.',
     sentFrom: 'Sent from Prague',
@@ -180,12 +346,15 @@ const i18n = {
     sub: '拍一張照、寫幾行字，我們幫你寄出真實的明信片。',
     btnWrite: '✉️ \u00a0寫一張明信片',
     editorTitle: '你的明信片',
-    photoLabel: '你的照片',
+    photoLabel: '點擊新增照片',
+    retakeHint: '📷 更換照片',
     msgPlaceholder: '嗨！我在這裡，想著你...',
     toName: '收件人姓名',
     toCity: '城市，國家',
     btnSend: '📮 \u00a0寄出明信片',
     btnBack: '← 返回',
+    flipToBack: '✏️ 寫訊息 →',
+    flipToFront: '🖼 看照片 ←',
     doneTitle: '明信片已寄出！',
     doneSub: '你的明信片正在路上，很快就會帶給收件人驚喜。',
     sentFrom: '從布拉格寄出',
@@ -199,10 +368,14 @@ const i18n = {
 };
 
 let currentLang = 'en';
+let isFlipped = false;
+let currentPhotoDataUrl = null;
 
 function setLang(lang) {
   currentLang = lang;
-  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent.toLowerCase() === lang || (lang === 'zh' && b.textContent === '中文')));
+  document.querySelectorAll('.lang-btn').forEach(b =>
+    b.classList.toggle('active', (lang === 'en' && b.textContent === 'EN') || (lang === 'zh' && b.textContent === '中文'))
+  );
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
     if (i18n[lang][key] !== undefined) el.innerHTML = i18n[lang][key];
@@ -211,15 +384,53 @@ function setLang(lang) {
     const key = el.getAttribute('data-i18n-placeholder');
     if (i18n[lang][key] !== undefined) el.placeholder = i18n[lang][key];
   });
-  // Update photo label if it hasn't been replaced by a photo
-  const photoLabelEl = document.querySelector('.photo-label');
-  if (photoLabelEl && photoLabelEl.getAttribute('data-i18n') === 'photoLabel') {
-    photoLabelEl.textContent = i18n[lang].photoLabel;
-  }
+  updateFlipBtn();
 }
 
-// Init
-setLang('en');
+function updateFlipBtn() {
+  const btn = document.getElementById('flipBtn');
+  if (btn) btn.textContent = isFlipped ? i18n[currentLang].flipToFront : i18n[currentLang].flipToBack;
+}
+
+function flipPostcard() {
+  isFlipped = !isFlipped;
+  document.getElementById('postcardScene').classList.toggle('flipped', isFlipped);
+  updateFlipBtn();
+}
+
+function handleFrontClick() {
+  document.getElementById('photoInput').click();
+}
+
+document.getElementById('photoInput').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    currentPhotoDataUrl = ev.target.result;
+    const img = document.getElementById('uploadedPhoto');
+    img.src = currentPhotoDataUrl;
+    img.style.display = 'block';
+    document.getElementById('photoPlaceholder').style.display = 'none';
+    // Auto-flip to back to write message
+    setTimeout(() => {
+      if (!isFlipped) flipPostcard();
+    }, 400);
+  };
+  reader.readAsDataURL(file);
+});
+
+document.getElementById('msgArea').addEventListener('input', function() {
+  document.getElementById('charCount').textContent = this.value.length;
+});
+
+// Swipe to flip
+let touchStartX = 0;
+document.getElementById('postcardScene').addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, {passive:true});
+document.getElementById('postcardScene').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if (Math.abs(dx) > 50) flipPostcard();
+}, {passive:true});
 
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -227,27 +438,24 @@ function showScreen(id) {
 }
 function showEditor() { showScreen('screen-editor'); }
 
-document.getElementById('msgArea').addEventListener('input', function() {
-  document.getElementById('charCount').textContent = this.value.length;
-});
-
-const gradients = [
-  'linear-gradient(135deg,#f093fb,#f5576c)',
-  'linear-gradient(135deg,#4facfe,#00f2fe)',
-  'linear-gradient(135deg,#43e97b,#38f9d7)',
-  'linear-gradient(135deg,#fa709a,#fee140)',
-  'linear-gradient(135deg,#a18cd1,#fbc2eb)',
-];
-function fakePhotoUpload(el) {
-  el.style.background = gradients[Math.floor(Math.random() * gradients.length)];
-  el.innerHTML = '<span style="font-size:28px">🏙️</span><span style="font-size:10px;opacity:0.85">' + i18n[currentLang].photoLabel + '</span>';
-}
-
 function startSendAnimation() {
+  // Show photo in anim card if available
+  const animPhoto = document.getElementById('animPhoto');
+  const animEmoji = document.getElementById('animEmoji');
+  if (currentPhotoDataUrl) {
+    animPhoto.src = currentPhotoDataUrl;
+    animPhoto.style.display = 'block';
+    animEmoji.style.display = 'none';
+  } else {
+    animPhoto.style.display = 'none';
+    animEmoji.style.display = 'block';
+  }
+
   showScreen('screen-anim');
   const card = document.getElementById('animCard');
   const mailbox = document.getElementById('animMailbox');
   const flap = document.getElementById('animFlap');
+
   setTimeout(() => {
     card.classList.add('flying');
     setTimeout(() => { flap.style.transform = 'scaleY(0.15)'; }, 550);
@@ -265,12 +473,20 @@ function sendAnother() {
   document.getElementById('charCount').textContent = '0';
   document.getElementById('toName').value = '';
   document.getElementById('toCity').value = '';
-  const left = document.querySelector('.postcard-left');
-  left.style.background = 'linear-gradient(135deg,#667eea 0%,#764ba2 100%)';
-  left.innerHTML = '<span class="camera-icon">📷</span><span class="photo-label" data-i18n="photoLabel">' + i18n[currentLang].photoLabel + '</span>';
+  document.getElementById('uploadedPhoto').style.display = 'none';
+  document.getElementById('uploadedPhoto').src = '';
+  document.getElementById('photoPlaceholder').style.display = 'flex';
+  document.getElementById('photoInput').value = '';
   document.getElementById('animCard').classList.remove('flying');
+  currentPhotoDataUrl = null;
+  isFlipped = false;
+  document.getElementById('postcardScene').classList.remove('flipped');
+  updateFlipBtn();
   showScreen('screen-editor');
 }
+
+// Init
+setLang('en');
 </script>
 </body>
 </html>
