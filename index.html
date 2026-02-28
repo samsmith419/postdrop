@@ -25,81 +25,118 @@ body{font-family:'Lato',sans-serif;background:#1a2744;min-height:100vh;display:f
 .btn-ghost{background:transparent;border:2px solid #FF6600;color:#FF6600}
 .btn-ghost:hover{background:rgba(255,102,0,.1)}
 
-/* Editor */
+/* ── POSTCARD FLIP (the correct way) ──
+   Rule 1: parent needs explicit height (not min-height) so absolute children have reference
+   Rule 2: back face gets rotateY(180deg) from the start
+   Rule 3: -webkit-backface-visibility for Safari
+   Rule 4: flip button lives OUTSIDE the scene
+*/
 #screen-editor{gap:14px}
 .editor-title{font-family:'Playfair Display',serif;color:#fff;font-size:20px;text-align:center}
-.pc-tabs{display:flex;width:100%;border-radius:12px 12px 0 0;overflow:hidden}
-.pc-tab{flex:1;padding:9px;font-size:12px;font-weight:700;text-align:center;cursor:pointer;background:rgba(255,255,255,.07);color:rgba(255,255,255,.5);border:none;transition:all .2s}
-.pc-tab.on{background:#fdf6e3;color:#333}
-.pc-body{width:100%;background:#fdf6e3;border-radius:0 0 12px 12px;box-shadow:0 8px 28px rgba(0,0,0,.4);overflow:hidden}
-.pc-photo{display:flex;align-items:center;justify-content:center;height:190px;cursor:pointer;position:relative;background:linear-gradient(135deg,#667eea,#764ba2);overflow:hidden}
-.pc-photo img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+
+.pc-scene{
+  width:100%;
+  height:210px;          /* ← explicit height, not min-height */
+  perspective:900px;
+  -webkit-perspective:900px;
+}
+.pc-flipper{
+  width:100%; height:100%;
+  position:relative;
+  transform-style:preserve-3d;
+  -webkit-transform-style:preserve-3d;
+  transition:transform .55s cubic-bezier(.4,.2,.2,1);
+}
+.pc-scene.flipped .pc-flipper{
+  transform:rotateY(180deg);
+  -webkit-transform:rotateY(180deg);
+}
+.pc-face{
+  position:absolute; inset:0;
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
+  border-radius:12px;
+  overflow:hidden;
+  box-shadow:0 8px 28px rgba(0,0,0,.4);
+}
+
+/* Front — photo */
+.pc-front{
+  background:linear-gradient(135deg,#667eea,#764ba2);
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; position:relative;
+}
+.pc-front img.photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .pc-photo-hint{display:flex;flex-direction:column;align-items:center;gap:8px;color:#fff;opacity:.85;pointer-events:none;position:relative;z-index:1}
-.pc-photo-hint span:first-child{font-size:36px}
-.pc-photo-hint span:last-child{font-size:12px;font-weight:600}
-.pc-retake{position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:16px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;z-index:2;display:none}
-.pc-photo:hover .pc-retake,.pc-photo:focus-within .pc-retake{display:block}
-.pc-write{display:flex;height:190px;position:relative}
-.pc-stripe{width:5px;background:repeating-linear-gradient(to bottom,#FF6600 0,#FF6600 18px,#fff 18px,#fff 22px);flex-shrink:0}
+.pc-photo-hint .cam{font-size:38px}
+.pc-photo-hint .lbl{font-size:12px;font-weight:600}
+.pc-retake{position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:16px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;z-index:2;opacity:0;transition:opacity .2s}
+.pc-front:hover .pc-retake{opacity:1}
+
+/* Back — writing. MUST start rotated */
+.pc-back{
+  background:#fdf6e3;
+  transform:rotateY(180deg);
+  -webkit-transform:rotateY(180deg);
+  display:flex;
+}
+.pc-stripe{width:5px;flex-shrink:0;background:repeating-linear-gradient(to bottom,#FF6600 0,#FF6600 18px,#fff 18px,#fff 22px)}
 .pc-content{flex:1;padding:10px 12px;display:flex;flex-direction:column;position:relative}
 .pc-stamp{position:absolute;top:8px;right:8px;width:36px;height:46px;border:2px solid #999;border-radius:2px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:15px;background:#fff}
 .pc-stamp small{font-size:6px;color:#888;margin-top:1px}
-.pc-content textarea{flex:1;border:none;background:transparent;font-family:'Lato',sans-serif;font-size:12px;color:#333;resize:none;outline:none;line-height:1.85;padding-right:46px;background-image:repeating-linear-gradient(transparent,transparent 24px,#e0d8c8 24px,#e0d8c8 25px);background-size:100% 25px}
+.pc-content textarea{
+  flex:1; border:none; background:transparent;
+  font-family:'Lato',sans-serif; font-size:12px; color:#333;
+  resize:none; outline:none; line-height:1.85; padding-right:46px;
+  background-image:repeating-linear-gradient(transparent,transparent 24px,#e0d8c8 24px,#e0d8c8 25px);
+  background-size:100% 25px;
+}
 .pc-counter{text-align:right;font-size:10px;color:#aaa;margin-top:2px}
 .pc-to{border-top:1px solid #ddd;padding-top:5px;display:flex;flex-direction:column;gap:3px}
 .pc-to input{border:none;background:transparent;font-size:11px;color:#444;outline:none;padding:2px 0;border-bottom:1px dashed #ccc}
 .pc-to input::placeholder{color:#bbb}
+
+/* Flip button — lives outside the scene */
+.flip-pill{
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.18);
+  color:rgba(255,255,255,.65);
+  border-radius:20px; padding:6px 16px;
+  font-size:11px; font-weight:700; cursor:pointer;
+  transition:all .2s; white-space:nowrap; align-self:center;
+}
+.flip-pill:hover{background:rgba(255,255,255,.15);color:#fff}
+
 #photoInput{display:none}
 
-/* ═══ DROP SCREEN ═══ */
+/* ── DROP SCREEN ── */
 #screen-drop{
   position:fixed;inset:0;background:#1a2744;
   flex-direction:column;align-items:center;justify-content:space-between;
-  padding:30px 24px 40px;
-  z-index:50;
-  display:none;
+  padding:30px 24px 40px; z-index:50; display:none;
 }
 #screen-drop.active{display:flex}
-
-.drop-hint{color:rgba(255,255,255,.5);font-size:13px;text-align:center;transition:opacity .3s}
-
-/* Draggable postcard */
+.drop-hint{color:rgba(255,255,255,.55);font-size:13px;text-align:center;transition:color .3s}
+.drop-hint.near{color:#FF6600;font-weight:700}
 .drag-card{
-  width:260px;height:150px;
-  background:#fdf6e3;border-radius:10px;
+  width:260px;height:150px;background:#fdf6e3;border-radius:10px;
   box-shadow:0 8px 32px rgba(0,0,0,.5);
-  position:relative;
-  cursor:grab;
-  touch-action:none;
-  user-select:none;
-  display:flex;overflow:hidden;
+  display:flex;overflow:hidden;cursor:grab;
+  touch-action:none;user-select:none;
   transition:box-shadow .2s;
-  z-index:10;
 }
-.drag-card:active{cursor:grabbing;box-shadow:0 16px 48px rgba(0,0,0,.7)}
-.drag-card.dragging{transition:none}
-.drag-card .card-photo{width:45%;background:linear-gradient(135deg,#667eea,#764ba2);position:relative;overflow:hidden;flex-shrink:0}
-.drag-card .card-photo img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
-.drag-card .card-photo .no-photo{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:24px;opacity:.6}
-.drag-card .card-right{flex:1;padding:8px 10px;display:flex;flex-direction:column;gap:4px;position:relative}
-.drag-card .card-stamp{position:absolute;top:6px;right:6px;width:26px;height:32px;border:1.5px solid #999;border-radius:1px;display:flex;align-items:center;justify-content:center;font-size:11px;background:#fff}
-.drag-card .card-lines{flex:1;background-image:repeating-linear-gradient(transparent,transparent 14px,#e0d8c8 14px,#e0d8c8 15px);background-size:100% 15px;margin-top:2px}
-.drag-card .card-addr{border-top:1px solid #ddd;padding-top:3px;font-size:9px;color:#aaa}
-
-/* Mailbox drop zone */
-.drop-mailbox{
-  width:160px;height:200px;
-  position:relative;
-  transition:filter .3s;
-}
-.drop-mailbox.glow{filter:drop-shadow(0 0 20px rgba(255,102,0,.8))}
-.drop-mailbox svg{width:100%;height:100%}
-.slot-zone{
-  position:absolute;top:45%;left:50%;transform:translateX(-50%);
-  width:100px;height:20px;
-  /* debug: uncomment to see zone */
-  /* background:rgba(255,0,0,.3); */
-}
+.drag-card:active,.drag-card.dragging{cursor:grabbing;box-shadow:0 16px 48px rgba(0,0,0,.7)}
+.dc-photo{width:45%;position:relative;overflow:hidden;flex-shrink:0;background:linear-gradient(135deg,#667eea,#764ba2)}
+.dc-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.dc-photo .no-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:26px;opacity:.6}
+.dc-right{flex:1;padding:8px 10px;display:flex;flex-direction:column;position:relative}
+.dc-stamp{position:absolute;top:6px;right:6px;width:26px;height:32px;border:1.5px solid #999;border-radius:1px;display:flex;align-items:center;justify-content:center;font-size:11px;background:#fff}
+.dc-lines{flex:1;background-image:repeating-linear-gradient(transparent,transparent 14px,#e0d8c8 14px,#e0d8c8 15px);background-size:100% 15px}
+.dc-addr{font-size:9px;color:#aaa;padding-top:3px;border-top:1px solid #ddd}
+.drop-box{width:170px;height:220px;position:relative;transition:filter .25s}
+.drop-box.glow{filter:drop-shadow(0 0 18px rgba(255,102,0,.9))}
+.drop-box svg{width:100%;height:100%}
+.slot-hit{position:absolute;top:44%;left:50%;transform:translateX(-50%);width:110px;height:30px}
 
 /* Done */
 #screen-done{gap:18px;text-align:center}
@@ -109,8 +146,7 @@ body{font-family:'Lato',sans-serif;background:#1a2744;min-height:100vh;display:f
 .done-sub{color:#a0b0cc;font-size:14px;line-height:1.6}
 .info-card{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);border-radius:14px;padding:18px 20px;width:100%;display:flex;flex-direction:column;gap:10px}
 .info-row{display:flex;align-items:center;gap:10px;color:#fff;font-size:13px}
-.info-row .ico{font-size:20px}
-.info-label{color:#a0b0cc;font-size:11px}
+.ico{font-size:20px}.info-label{color:#a0b0cc;font-size:11px}
 </style>
 </head>
 <body>
@@ -145,18 +181,22 @@ body{font-family:'Lato',sans-serif;background:#1a2744;min-height:100vh;display:f
 <!-- EDITOR -->
 <div id="screen-editor" class="screen">
   <h2 class="editor-title" data-t="editorTitle"></h2>
-  <div style="width:100%">
-    <div class="pc-tabs">
-      <button class="pc-tab on" id="tab-photo" onclick="showSide('photo')" data-t="tabPhoto"></button>
-      <button class="pc-tab" id="tab-write" onclick="showSide('write')" data-t="tabWrite"></button>
-    </div>
-    <div class="pc-body">
-      <div class="pc-photo" id="side-photo" onclick="document.getElementById('photoInput').click()">
-        <img id="uploadedImg" style="display:none" alt="">
-        <div class="pc-photo-hint" id="photoHint"><span>📷</span><span data-t="photoLabel"></span></div>
-        <button class="pc-retake" data-t="retake" onclick="event.stopPropagation();document.getElementById('photoInput').click()"></button>
+
+  <!-- Postcard with 3D flip -->
+  <div class="pc-scene" id="pcScene">
+    <div class="pc-flipper">
+      <!-- FRONT -->
+      <div class="pc-face pc-front" onclick="handlePhotoClick()">
+        <img class="photo" id="uploadedImg" style="display:none" alt="">
+        <div class="pc-photo-hint" id="photoHint">
+          <span class="cam">📷</span>
+          <span class="lbl" data-t="photoLabel"></span>
+        </div>
+        <button class="pc-retake" data-t="retake"
+          onclick="event.stopPropagation();document.getElementById('photoInput').click()"></button>
       </div>
-      <div class="pc-write" id="side-write" style="display:none">
+      <!-- BACK -->
+      <div class="pc-face pc-back">
         <div class="pc-stripe"></div>
         <div class="pc-content">
           <div class="pc-stamp">🇨🇿<small>CZ</small></div>
@@ -170,27 +210,29 @@ body{font-family:'Lato',sans-serif;background:#1a2744;min-height:100vh;display:f
       </div>
     </div>
   </div>
-  <button class="btn" onclick="openDrop()" data-t="btnDrop"></button>
+
+  <!-- Flip button OUTSIDE the scene -->
+  <button class="flip-pill" id="flipPill" onclick="flipCard()" data-t="flipToBack"></button>
+
+  <button class="btn" onclick="openDrop()" style="margin-top:18px" data-t="btnDrop"></button>
   <button class="btn btn-ghost" onclick="go('screen-landing')" data-t="btnBack"></button>
 </div>
 
-<!-- DROP SCREEN (fullscreen) -->
+<!-- DROP SCREEN -->
 <div id="screen-drop" class="screen">
   <p class="drop-hint" id="dropHint" data-t="dropHint"></p>
-
   <div class="drag-card" id="dragCard">
-    <div class="card-photo">
+    <div class="dc-photo">
       <img id="dragImg" style="display:none" alt="">
-      <div class="card-photo .no-photo" id="dragNoPhoto">📷</div>
+      <div class="no-ph" id="dragNoPhoto">📷</div>
     </div>
-    <div class="card-right">
-      <div class="card-stamp">🇨🇿</div>
-      <div class="card-lines"></div>
-      <div class="card-addr" id="cardAddr"></div>
+    <div class="dc-right">
+      <div class="dc-stamp">🇨🇿</div>
+      <div class="dc-lines"></div>
+      <div class="dc-addr" id="cardAddr"></div>
     </div>
   </div>
-
-  <div class="drop-mailbox" id="dropMailbox">
+  <div class="drop-box" id="dropBox">
     <svg viewBox="0 0 200 260" fill="none">
       <rect x="88" y="200" width="24" height="56" rx="4" fill="#cc4400"/>
       <rect x="20" y="80" width="160" height="130" rx="14" fill="#FF6600"/>
@@ -203,10 +245,11 @@ body{font-family:'Lato',sans-serif;background:#1a2744;min-height:100vh;display:f
       <circle cx="155" cy="110" r="4" fill="#cc4400"/>
       <rect x="88" y="185" width="24" height="14" rx="4" fill="#cc4400"/>
       <circle cx="100" cy="185" r="5" fill="#e55500"/>
-      <rect id="dropFlap" x="50" y="118" width="100" height="10" rx="5" fill="#cc4400" style="transform-origin:100px 118px;transition:transform .2s"/>
+      <rect id="dropFlap" x="50" y="118" width="100" height="10" rx="5" fill="#cc4400"
+        style="transform-origin:100px 118px;transition:transform .2s"/>
       <ellipse cx="70" cy="95" rx="20" ry="6" fill="#fff" opacity=".1" transform="rotate(-20 70 95)"/>
     </svg>
-    <div class="slot-zone" id="slotZone"></div>
+    <div class="slot-hit" id="slotHit"></div>
   </div>
 </div>
 
@@ -230,14 +273,16 @@ const T={
     sub:"Snap a photo, write a few words. We'll mail a real postcard.",
     btnWrite:'✉️  Write a Postcard',
     editorTitle:'Your Postcard',
-    tabPhoto:'🖼  Photo',tabWrite:'✏️  Write',
-    photoLabel:'Tap to add photo',retake:'📷 Change',
+    photoLabel:'Tap to add your photo',
+    retake:'📷 Change',
     msgPh:"Hey! I'm here thinking of you...",
     toName:'Recipient name',toCity:'City, Country',
+    flipToBack:'✏️  Write message →',
+    flipToFront:'🖼  View photo ←',
     btnDrop:'📮  Drop into mailbox →',
     btnBack:'← Back',
-    dropHint:'Drag the postcard into the mailbox',
-    dropNear:'Let go to send! 📮',
+    dropHint:'Drag the postcard into the mailbox slot',
+    dropNear:'Release to send! 📮',
     doneTitle:'Postcard Sent!',
     doneSub:'Your postcard is on its way!',
     sentFrom:'Sent from Prague',sentFromSub:'Czech Republic',
@@ -250,10 +295,11 @@ const T={
     sub:'拍一張照、寫幾行字，我們幫你寄出真實的明信片。',
     btnWrite:'✉️  寫一張明信片',
     editorTitle:'你的明信片',
-    tabPhoto:'🖼  照片',tabWrite:'✏️  寫字',
     photoLabel:'點擊新增照片',retake:'📷 更換',
     msgPh:'嗨！我在這裡，想著你...',
     toName:'收件人姓名',toCity:'城市，國家',
+    flipToBack:'✏️  寫訊息 →',
+    flipToFront:'🖼  看照片 ←',
     btnDrop:'📮  投入郵筒 →',
     btnBack:'← 返回',
     dropHint:'把明信片拖進郵筒裡',
@@ -266,21 +312,27 @@ const T={
     btnAgain:'✉️  再寄一張',
   }
 };
-let lang='en', photoData=null;
+
+let lang='en', isFlipped=false, photoData=null;
 
 function setLang(l){
   lang=l;
   document.querySelectorAll('.lb').forEach(b=>b.classList.toggle('on',(l==='en'&&b.textContent==='EN')||(l==='zh'&&b.textContent==='中文')));
   document.querySelectorAll('[data-t]').forEach(el=>{const v=T[l][el.dataset.t];if(v!==undefined)el.innerHTML=v;});
   document.querySelectorAll('[data-t-ph]').forEach(el=>{const v=T[l][el.dataset.tPh];if(v!==undefined)el.placeholder=v;});
+  updatePill();
 }
 function go(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
-function showSide(s){
-  document.getElementById('side-photo').style.display=s==='photo'?'flex':'none';
-  document.getElementById('side-write').style.display=s==='write'?'flex':'none';
-  document.getElementById('tab-photo').classList.toggle('on',s==='photo');
-  document.getElementById('tab-write').classList.toggle('on',s==='write');
+function updatePill(){
+  document.getElementById('flipPill').textContent=T[lang][isFlipped?'flipToFront':'flipToBack'];
 }
+function flipCard(){
+  isFlipped=!isFlipped;
+  document.getElementById('pcScene').classList.toggle('flipped',isFlipped);
+  updatePill();
+}
+
+function handlePhotoClick(){document.getElementById('photoInput').click();}
 document.getElementById('photoInput').addEventListener('change',function(){
   const f=this.files[0];if(!f)return;
   const r=new FileReader();
@@ -289,146 +341,117 @@ document.getElementById('photoInput').addEventListener('change',function(){
     document.getElementById('uploadedImg').src=photoData;
     document.getElementById('uploadedImg').style.display='block';
     document.getElementById('photoHint').style.display='none';
-    setTimeout(()=>showSide('write'),300);
+    // Auto flip to back to write
+    if(!isFlipped){setTimeout(()=>flipCard(),350);}
   };
   r.readAsDataURL(f);
 });
+
+// Swipe on postcard to flip
+(()=>{
+  let sx=0;
+  const scene=document.getElementById('pcScene');
+  scene.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;},{passive:true});
+  scene.addEventListener('touchend',e=>{
+    if(Math.abs(e.changedTouches[0].clientX-sx)>50)flipCard();
+  },{passive:true});
+})();
+
 document.getElementById('msgArea').addEventListener('input',function(){document.getElementById('cc').textContent=this.value.length;});
 
 function openDrop(){
-  // Populate drag card preview
   const di=document.getElementById('dragImg'),dn=document.getElementById('dragNoPhoto');
   if(photoData){di.src=photoData;di.style.display='block';dn.style.display='none';}
   else{di.style.display='none';dn.style.display='flex';}
-  const addr=document.getElementById('toName').value||'';
-  document.getElementById('cardAddr').textContent=addr;
+  const addr=document.getElementById('toName').value;
+  document.getElementById('cardAddr').textContent=addr||'';
+  // Reset card position
+  const card=document.getElementById('dragCard');
+  card.style.cssText='';card.style.display='';
   go('screen-drop');
   initDrag();
 }
 
-// ── DRAG LOGIC ──
 function initDrag(){
   const card=document.getElementById('dragCard');
-  const mailbox=document.getElementById('dropMailbox');
+  const box=document.getElementById('dropBox');
   const flap=document.getElementById('dropFlap');
   const hint=document.getElementById('dropHint');
+  let ox=0,oy=0,isDragging=false,dropped=false;
+  flap.style.transform='';box.classList.remove('glow');hint.classList.remove('near');
 
-  // Reset position
-  card.style.transform='';
-  card.style.transition='';
-  card.classList.remove('dragging');
-  flap.style.transform='';
-  mailbox.classList.remove('glow');
-
-  let startX=0,startY=0,curX=0,curY=0,isDragging=false,dropped=false;
-
-  function getSlotRect(){return document.getElementById('slotZone').getBoundingClientRect();}
-  function getCardRect(){return card.getBoundingClientRect();}
-
-  function isNearSlot(){
-    const sr=getSlotRect(),cr=getCardRect();
-    const cx=cr.left+cr.width/2, cy=cr.top+cr.height/2;
-    return cy > sr.top-40 && cy < sr.bottom+60 && cx > sr.left-60 && cx < sr.right+60;
+  function ptOf(e){return e.touches?e.touches[0]:e;}
+  function slotRect(){return document.getElementById('slotHit').getBoundingClientRect();}
+  function cardCenter(){const r=card.getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2};}
+  function nearSlot(){
+    const s=slotRect(),c=cardCenter();
+    return c.y>s.top-50&&c.y<s.bottom+70&&c.x>s.left-70&&c.x<s.right+70;
   }
 
-  function onStart(e){
+  card.onmousedown=card.ontouchstart=function(e){
     if(dropped)return;
-    isDragging=true;
-    card.classList.add('dragging');
-    const pt=e.touches?e.touches[0]:e;
-    const rect=card.getBoundingClientRect();
-    startX=pt.clientX-rect.left-rect.width/2;
-    startY=pt.clientY-rect.top-rect.height/2;
     e.preventDefault();
-  }
-  function onMove(e){
+    isDragging=true;card.classList.add('dragging');
+    const pt=ptOf(e),r=card.getBoundingClientRect();
+    ox=pt.clientX-r.left-r.width/2;
+    oy=pt.clientY-r.top-r.height/2;
+  };
+  document.onmousemove=document.ontouchmove=function(e){
     if(!isDragging||dropped)return;
     e.preventDefault();
-    const pt=e.touches?e.touches[0]:e;
-    curX=pt.clientX-startX;curY=pt.clientY-startY;
-
-    // Get card's original centered position
-    const orig=card.getBoundingClientRect();
-    const ox=window.innerWidth/2;
-    const oy=orig.top+orig.height/2; // approximate original center
-
+    const pt=ptOf(e);
     card.style.position='fixed';
-    card.style.left=(curX-card.offsetWidth/2)+'px';
-    card.style.top=(curY-card.offsetHeight/2)+'px';
-    card.style.margin='0';
-
-    const near=isNearSlot();
-    mailbox.classList.toggle('glow',near);
-    flap.style.transform=near?'scaleY(0.2)':'';
-    hint.innerHTML=near?T[lang].dropNear:T[lang].dropHint;
-  }
-  function onEnd(e){
+    card.style.left=(pt.clientX-ox-card.offsetWidth/2)+'px';
+    card.style.top=(pt.clientY-oy-card.offsetHeight/2)+'px';
+    card.style.margin='0';card.style.zIndex='100';
+    const n=nearSlot();
+    box.classList.toggle('glow',n);
+    flap.style.transform=n?'scaleY(0.15)':'';
+    hint.classList.toggle('near',n);
+    hint.innerHTML=n?T[lang].dropNear:T[lang].dropHint;
+  };
+  document.onmouseup=document.ontouchend=function(){
     if(!isDragging||dropped)return;
-    isDragging=false;
-    card.classList.remove('dragging');
-    if(isNearSlot()){
+    isDragging=false;card.classList.remove('dragging');
+    if(nearSlot()){
       dropped=true;
-      dropCard();
+      const s=slotRect();
+      card.style.transition='all .45s cubic-bezier(.4,0,.8,.6)';
+      card.style.left=(s.left+s.width/2-card.offsetWidth/2)+'px';
+      card.style.top=(s.top-card.offsetHeight/2)+'px';
+      card.style.transform='scale(0.1) rotate(-4deg)';
+      card.style.opacity='0';
+      flap.style.transform='scaleY(1)';
+      if(navigator.vibrate)navigator.vibrate([25,15,50]);
+      setTimeout(()=>{
+        ['left','right','top','right'].forEach((d,i)=>{
+          setTimeout(()=>{box.style.transform=`translateX(${i%2?3:-3}px)`;},i*55);
+        });
+        setTimeout(()=>{box.style.transform='';},220);
+      },380);
+      setTimeout(()=>{card.style.display='none';go('screen-done');},870);
     } else {
-      // Snap back
       card.style.transition='all .4s cubic-bezier(.175,.885,.32,1.275)';
-      card.style.position='';
-      card.style.left='';card.style.top='';card.style.margin='';
+      card.style.position='';card.style.left='';card.style.top='';
+      card.style.margin='';card.style.zIndex='';
       setTimeout(()=>{card.style.transition='';},400);
-      flap.style.transform='';
-      mailbox.classList.remove('glow');
-      hint.innerHTML=T[lang].dropHint;
+      box.classList.remove('glow');flap.style.transform='';
+      hint.classList.remove('near');hint.innerHTML=T[lang].dropHint;
     }
-  }
-
-  function dropCard(){
-    // Animate into slot
-    const sr=getSlotRect();
-    card.style.transition='all .5s cubic-bezier(.4,0,.8,.6)';
-    card.style.left=(sr.left+sr.width/2-card.offsetWidth/2)+'px';
-    card.style.top=(sr.top-card.offsetHeight/2)+'px';
-    card.style.transform='scale(0.15) rotate(-5deg)';
-    card.style.opacity='0';
-    flap.style.transform='scaleY(1)';
-    // Haptic
-    if(navigator.vibrate) navigator.vibrate([30,20,60]);
-    // Thunk mailbox
-    setTimeout(()=>{
-      mailbox.style.animation='none';
-      mailbox.style.transform='translateX(-3px)';
-      setTimeout(()=>{mailbox.style.transform='translateX(3px)';},60);
-      setTimeout(()=>{mailbox.style.transform='translateX(-2px)';},120);
-      setTimeout(()=>{mailbox.style.transform='';},180);
-    },400);
-    setTimeout(()=>{
-      card.style.display='none';
-      go('screen-done');
-    },900);
-  }
-
-  card.addEventListener('mousedown',onStart);
-  card.addEventListener('touchstart',onStart,{passive:false});
-  document.addEventListener('mousemove',onMove);
-  document.addEventListener('touchmove',onMove,{passive:false});
-  document.addEventListener('mouseup',onEnd);
-  document.addEventListener('touchend',onEnd);
+  };
 }
 
 function reset(){
   document.getElementById('msgArea').value='';
   document.getElementById('cc').textContent='0';
-  document.getElementById('toName').value='';
-  document.getElementById('toCity').value='';
-  document.getElementById('uploadedImg').style.display='none';
-  document.getElementById('uploadedImg').src='';
+  document.getElementById('toName').value='';document.getElementById('toCity').value='';
+  document.getElementById('uploadedImg').style.display='none';document.getElementById('uploadedImg').src='';
   document.getElementById('photoHint').style.display='flex';
   document.getElementById('photoInput').value='';
-  photoData=null;
-  showSide('photo');
-  // Reset drag card
-  const card=document.getElementById('dragCard');
-  card.style.cssText='';
-  card.style.display='';
+  photoData=null;isFlipped=false;
+  document.getElementById('pcScene').classList.remove('flipped');
+  updatePill();
+  document.onmousemove=document.ontouchmove=document.onmouseup=document.ontouchend=null;
   go('screen-editor');
 }
 setLang('en');
