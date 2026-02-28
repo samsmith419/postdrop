@@ -25,69 +25,49 @@ body{font-family:'Lato',sans-serif;background:#1a2744;min-height:100vh;display:f
 .btn-ghost{background:transparent;border:2px solid #FF6600;color:#FF6600}
 .btn-ghost:hover{background:rgba(255,102,0,.1)}
 
-/* ── POSTCARD FLIP (the correct way) ──
-   Rule 1: parent needs explicit height (not min-height) so absolute children have reference
-   Rule 2: back face gets rotateY(180deg) from the start
-   Rule 3: -webkit-backface-visibility for Safari
-   Rule 4: flip button lives OUTSIDE the scene
-*/
+/* ── POSTCARD FLIP — JS scaleX approach (works on all mobile browsers) ── */
 #screen-editor{gap:14px}
 .editor-title{font-family:'Playfair Display',serif;color:#fff;font-size:20px;text-align:center}
 
-.pc-scene{
-  width:100%;
-  height:210px;          /* ← explicit height, not min-height */
-  perspective:900px;
-  -webkit-perspective:900px;
-}
-.pc-flipper{
-  width:100%; height:100%;
-  position:relative;
-  transform-style:preserve-3d;
-  -webkit-transform-style:preserve-3d;
-  transition:transform .55s cubic-bezier(.4,.2,.2,1);
-}
-.pc-scene.flipped .pc-flipper{
-  transform:rotateY(180deg);
-  -webkit-transform:rotateY(180deg);
-}
+.pc-scene{width:100%;position:relative;}
+
+/* Both faces stacked, only one visible at a time */
 .pc-face{
-  position:absolute; inset:0;
-  backface-visibility:hidden;
-  -webkit-backface-visibility:hidden;
-  border-radius:12px;
-  overflow:hidden;
+  width:100%;border-radius:12px;overflow:hidden;
   box-shadow:0 8px 28px rgba(0,0,0,.4);
+  backface-visibility:visible;
 }
+.pc-face.hidden{display:none}
+
+/* scaleX flip animation */
+@keyframes flipOut{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+@keyframes flipIn{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.pc-face.flip-out{animation:flipOut .18s ease-in forwards}
+.pc-face.flip-in{animation:flipIn .18s ease-out forwards}
 
 /* Front — photo */
 .pc-front{
   background:linear-gradient(135deg,#667eea,#764ba2);
-  display:flex; align-items:center; justify-content:center;
-  cursor:pointer; position:relative;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;position:relative;height:210px;
 }
 .pc-front img.photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .pc-photo-hint{display:flex;flex-direction:column;align-items:center;gap:8px;color:#fff;opacity:.85;pointer-events:none;position:relative;z-index:1}
 .pc-photo-hint .cam{font-size:38px}
 .pc-photo-hint .lbl{font-size:12px;font-weight:600}
 .pc-retake{position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:16px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;z-index:2;opacity:0;transition:opacity .2s}
-.pc-front:hover .pc-retake{opacity:1}
+.pc-front:hover .pc-retake,.pc-front:focus-within .pc-retake{opacity:1}
 
-/* Back — writing. MUST start rotated */
-.pc-back{
-  background:#fdf6e3;
-  transform:rotateY(180deg);
-  -webkit-transform:rotateY(180deg);
-  display:flex;
-}
+/* Back — writing */
+.pc-back{background:#fdf6e3;display:flex;}
 .pc-stripe{width:5px;flex-shrink:0;background:repeating-linear-gradient(to bottom,#FF6600 0,#FF6600 18px,#fff 18px,#fff 22px)}
 .pc-content{flex:1;padding:10px 12px;display:flex;flex-direction:column;position:relative}
 .pc-stamp{position:absolute;top:8px;right:8px;width:36px;height:46px;border:2px solid #999;border-radius:2px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:15px;background:#fff}
 .pc-stamp small{font-size:6px;color:#888;margin-top:1px}
 .pc-content textarea{
-  flex:1; border:none; background:transparent;
-  font-family:'Lato',sans-serif; font-size:12px; color:#333;
-  resize:none; outline:none; line-height:1.85; padding-right:46px;
+  flex:1;min-height:90px;border:none;background:transparent;
+  font-family:'Lato',sans-serif;font-size:12px;color:#333;
+  resize:none;outline:none;line-height:1.85;padding-right:46px;
   background-image:repeating-linear-gradient(transparent,transparent 24px,#e0d8c8 24px,#e0d8c8 25px);
   background-size:100% 25px;
 }
@@ -96,14 +76,11 @@ body{font-family:'Lato',sans-serif;background:#1a2744;min-height:100vh;display:f
 .pc-to input{border:none;background:transparent;font-size:11px;color:#444;outline:none;padding:2px 0;border-bottom:1px dashed #ccc}
 .pc-to input::placeholder{color:#bbb}
 
-/* Flip button — lives outside the scene */
 .flip-pill{
-  background:rgba(255,255,255,.08);
-  border:1px solid rgba(255,255,255,.18);
-  color:rgba(255,255,255,.65);
-  border-radius:20px; padding:6px 16px;
-  font-size:11px; font-weight:700; cursor:pointer;
-  transition:all .2s; white-space:nowrap; align-self:center;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);
+  color:rgba(255,255,255,.65);border-radius:20px;padding:6px 16px;
+  font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;
+  white-space:nowrap;align-self:center;
 }
 .flip-pill:hover{background:rgba(255,255,255,.15);color:#fff}
 
@@ -182,30 +159,28 @@ body{font-family:'Lato',sans-serif;background:#1a2744;min-height:100vh;display:f
 <div id="screen-editor" class="screen">
   <h2 class="editor-title" data-t="editorTitle"></h2>
 
-  <!-- Postcard with 3D flip -->
+  <!-- Postcard with scaleX flip -->
   <div class="pc-scene" id="pcScene">
-    <div class="pc-flipper">
-      <!-- FRONT -->
-      <div class="pc-face pc-front" onclick="handlePhotoClick()">
-        <img class="photo" id="uploadedImg" style="display:none" alt="">
-        <div class="pc-photo-hint" id="photoHint">
-          <span class="cam">📷</span>
-          <span class="lbl" data-t="photoLabel"></span>
-        </div>
-        <button class="pc-retake" data-t="retake"
-          onclick="event.stopPropagation();document.getElementById('photoInput').click()"></button>
+    <!-- FRONT -->
+    <div class="pc-face pc-front" id="pcFront" onclick="handlePhotoClick()">
+      <img class="photo" id="uploadedImg" style="display:none" alt="">
+      <div class="pc-photo-hint" id="photoHint">
+        <span class="cam">📷</span>
+        <span class="lbl" data-t="photoLabel"></span>
       </div>
-      <!-- BACK -->
-      <div class="pc-face pc-back">
-        <div class="pc-stripe"></div>
-        <div class="pc-content">
-          <div class="pc-stamp">🇨🇿<small>CZ</small></div>
-          <textarea id="msgArea" maxlength="150" data-t-ph="msgPh"></textarea>
-          <div class="pc-counter"><span id="cc">0</span>/150</div>
-          <div class="pc-to">
-            <input id="toName" data-t-ph="toName">
-            <input id="toCity" data-t-ph="toCity">
-          </div>
+      <button class="pc-retake" data-t="retake"
+        onclick="event.stopPropagation();document.getElementById('photoInput').click()"></button>
+    </div>
+    <!-- BACK -->
+    <div class="pc-face pc-back hidden" id="pcBack">
+      <div class="pc-stripe"></div>
+      <div class="pc-content">
+        <div class="pc-stamp">🇨🇿<small>CZ</small></div>
+        <textarea id="msgArea" maxlength="150" data-t-ph="msgPh"></textarea>
+        <div class="pc-counter"><span id="cc">0</span>/150</div>
+        <div class="pc-to">
+          <input id="toName" data-t-ph="toName">
+          <input id="toCity" data-t-ph="toCity">
         </div>
       </div>
     </div>
@@ -327,8 +302,15 @@ function updatePill(){
   document.getElementById('flipPill').textContent=T[lang][isFlipped?'flipToFront':'flipToBack'];
 }
 function flipCard(){
+  const front=document.getElementById('pcFront'),back=document.getElementById('pcBack');
+  const outEl=isFlipped?back:front, inEl=isFlipped?front:back;
+  outEl.classList.add('flip-out');
+  setTimeout(()=>{
+    outEl.classList.remove('flip-out');outEl.classList.add('hidden');
+    inEl.classList.remove('hidden');inEl.classList.add('flip-in');
+    setTimeout(()=>inEl.classList.remove('flip-in'),200);
+  },180);
   isFlipped=!isFlipped;
-  document.getElementById('pcScene').classList.toggle('flipped',isFlipped);
   updatePill();
 }
 
@@ -350,9 +332,8 @@ document.getElementById('photoInput').addEventListener('change',function(){
 // Swipe on postcard to flip
 (()=>{
   let sx=0;
-  const scene=document.getElementById('pcScene');
-  scene.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;},{passive:true});
-  scene.addEventListener('touchend',e=>{
+  document.getElementById('pcScene').addEventListener('touchstart',e=>{sx=e.touches[0].clientX;},{passive:true});
+  document.getElementById('pcScene').addEventListener('touchend',e=>{
     if(Math.abs(e.changedTouches[0].clientX-sx)>50)flipCard();
   },{passive:true});
 })();
